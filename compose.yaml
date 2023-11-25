@@ -1,26 +1,33 @@
 services:
+
   mongodb:
     image: 'mongo:latest'
     environment:
-      - 'MONGO_INITDB_DATABASE=mydatabase'
-      - 'MONGO_INITDB_ROOT_PASSWORD=secret'
+      - 'MONGO_INITDB_DATABASE=devDatabase'
+      - 'MONGO_INITDB_ROOT_PASSWORD=root'
       - 'MONGO_INITDB_ROOT_USERNAME=root'
     ports:
       - '27017'
+
   rabbitmq:
     image: 'rabbitmq:latest'
     environment:
-      - 'RABBITMQ_DEFAULT_PASS=secret'
-      - 'RABBITMQ_DEFAULT_USER=myuser'
+      - 'RABBITMQ_DEFAULT_PASS=root'
+      - 'RABBITMQ_DEFAULT_USER=root'
     ports:
       - '5672'
+
   prometheus:
     image: prom/prometheus:v2.44.0
     container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "3001:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/monitoring/prometheus/prometheus.yml
+      - ./monitoring/prometheus:/etc/prometheus
+      - prom_data:/prometheus
 
   grafana:
     image: grafana/grafana:9.5.2
@@ -28,5 +35,11 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=root
+      - GF_SECURITY_ADMIN_PASSWORD=root
     volumes:
-      - ./grafana/provisioning/datasources:/etc/monitoring/provisioning/datasources
+      - ./monitoring/provisioning/datasources:/etc/grafana/provisioning/datasources
+
+volumes:
+  prom_data:
