@@ -1,42 +1,12 @@
 logging:
   level:
-    root: DEBUG
+    root: WARN
     org.springframework: INFO
-    io.micrometer: DEBUG
+    org.springframework.security: TRACE
+    io.micrometer: INFO
 
 server:
   port: 8080
-
-spring:
-  security:
-    oauth2:
-#      resourceserver:
-#        jwt:
-#          issuer-uri: https://accounts.google.com
-      client:
-        provider:
-          azure-ad:
-            authorization-uri: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
-            token-uri: https://login.microsoftonline.com/common/oauth2/v2.0/token
-            jwk-set-uri: https://login.microsoftonline.com/common/discovery/v2.0/keys
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            redirect-uri: '{baseUrl}/login/oauth2/code/google'
-          azure:
-            provider: azure-ad
-            client-id: ${AZURE_CLIENT_ID}
-            client-secret: ${AZURE_CLIENT_SECRET}
-            resource: https://graph.microsoft.com/
-            redirect-uri: '{baseUrl}/login/oauth2/code/azure-client'
-            client-authentication-method: client_secret_post
-            authorization-grant-type: authorization_code
-            scope: openid,profile
-
-#    user:
-#      name: admin
-#      password: admin
 
 management:
   server:
@@ -50,3 +20,13 @@ management:
     export:
       prometheus:
         enabled: true
+
+data:
+  mongodb:
+    uri: spring.data.mongodb.uri="mongodb://root:root@localhost:27017/devDatabase"
+    writeConcern: 'W1'
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:my-secret-key}
