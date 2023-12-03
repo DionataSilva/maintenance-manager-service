@@ -1,6 +1,5 @@
 package br.com.maintenancemanagerservice.config.security;
 
-import br.com.maintenancemanagerservice.model.entity.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
@@ -41,11 +40,13 @@ public class TokenService {
                     .verify(token)
                     .getSubject();
         } catch (JWTVerificationException exception){
+            // TODO: adicionar tratamente para expiração, refazer login
             return "";
         }
     }
 
     private Instant genExpirationDate(){
+        //TODO: deixar parametrizavel via properties
         return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
     }
 }

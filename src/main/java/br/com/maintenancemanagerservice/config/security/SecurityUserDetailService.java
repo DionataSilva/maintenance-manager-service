@@ -19,7 +19,7 @@ public class SecurityUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var user = userRepository.findByUsername(username);
+        var user = userRepository.findByName(username);
 
         if (Objects.isNull(user)){
             throw new UsernameNotFoundException(username);
@@ -29,7 +29,7 @@ public class SecurityUserDetailService implements UserDetailsService {
     }
 
     public void saveUserDetail(User user) {
-        if(Objects.isNull(userRepository.findByUsername(user.getUsername()))) {
+        if(Objects.isNull(userRepository.findByName(user.getName()))) {
             userRepository.save(user);
         }
     }

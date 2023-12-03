@@ -23,10 +23,10 @@ management:
 
 data:
   mongodb:
-    uri: spring.data.mongodb.uri="mongodb://root:root@localhost:27017/devDatabase"
+    uri: spring.data.mongodb.uri="mongodb://${MONGODB_USER:root}:${MONGODB_PASSWORD:root}@localhost:27017/devDatabase"
     writeConcern: 'W1'
 
 api:
   security:
     token:
-      secret: ${JWT_SECRET:my-secret-key}
+      secret: ${JWT_SECRET:dev-secret-key}

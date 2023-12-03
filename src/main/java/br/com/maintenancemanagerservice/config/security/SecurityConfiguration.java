@@ -2,7 +2,7 @@ package br.com.maintenancemanagerservice.config.security;
 
 import br.com.maintenancemanagerservice.model.entity.User;
 import br.com.maintenancemanagerservice.model.enums.UserRole;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,10 +23,11 @@ import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
+@AllArgsConstructor
 public class SecurityConfiguration {
 
-    @Autowired
-    private SecurityUserDetailService userDetailService;
+
+    private final SecurityUserDetailService userDetailService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityFilter securityFilter) throws Exception {
@@ -35,12 +36,10 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests( (authorize) -> authorize
-                        .requestMatchers("/actuator/prometheus").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/public").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/login").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/register").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/auth/login").permitAll()
+                        .requestMatchers("/auth/admin/**").hasAnyAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -66,10 +65,11 @@ public class SecurityConfiguration {
 
     @Bean
     public UserDetailsService userDetailsService() {
+        // TODO: Bean temporário
         var userDetails = User.builder()
-                .username("Admin")
+                .name("Admin")
                 .password(passwordEncoder().encode("root-admin-pass"))
-                .userRoles(Set.of(UserRole.ADMIN))
+                .roles(Set.of(UserRole.ADMIN))
                 .build();
 
         userDetailService.saveUserDetail(userDetails);

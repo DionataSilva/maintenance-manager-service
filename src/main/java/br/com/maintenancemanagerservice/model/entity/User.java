@@ -10,13 +10,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Data
-@Document()
+@Document
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,13 +24,14 @@ public class User implements UserDetails {
     @Id
     private String id;
     @Indexed(unique = true)
-    private String username;
+    private String name;
     private String password;
-    private Set<UserRole> userRoles;
+    private Set<UserRole> roles;
+    private boolean enabled = true;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return userRoles.stream()
+        return roles.stream()
                 .flatMap(role -> {
                     if (UserRole.ADMIN.equals(role)) {
                         return Stream.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
@@ -44,7 +44,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.username;
+        return this.name;
     }
 
     @Override
@@ -64,6 +64,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 }

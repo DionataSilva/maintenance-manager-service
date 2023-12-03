@@ -1,8 +1,9 @@
 package br.com.maintenancemanagerservice.controller;
 
 import br.com.maintenancemanagerservice.config.security.TokenService;
-import br.com.maintenancemanagerservice.dto.LoginRequestRecordDto;
-import br.com.maintenancemanagerservice.dto.RegisterRecordDTO;
+import br.com.maintenancemanagerservice.dto.RequestLoginRecord;
+import br.com.maintenancemanagerservice.dto.ResponseLoginRecord;
+import br.com.maintenancemanagerservice.dto.RegisterUserRecord;
 import br.com.maintenancemanagerservice.model.entity.User;
 import br.com.maintenancemanagerservice.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -12,47 +13,64 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
 
 @RestController
+@RequestMapping("/auth")
 @RequiredArgsConstructor
-public class TestController {
+public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final UserRepository userRepository;
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid LoginRequestRecordDto data){
+    public ResponseEntity<ResponseLoginRecord> login(@RequestBody @Valid RequestLoginRecord data){
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.username(), data.password());
         var auth = authenticationManager.authenticate(usernamePassword);
 
         var token = tokenService.generateToken((UserDetails) auth.getPrincipal());
 
-        return ResponseEntity.ok(token);
+        var response = new ResponseLoginRecord(token);
+
+        return ResponseEntity.ok(response);
     }
 
 
-    @PostMapping("/register")
-    public ResponseEntity register(@RequestBody @Valid RegisterRecordDTO data){
-        if(userRepository.findByUsername(data.userName()) != null) return ResponseEntity.badRequest().build();
+    @PostMapping("/admin/register")
+    public ResponseEntity register(@RequestBody @Valid RegisterUserRecord data){
+        var user = userRepository.findByName(data.userName());
+
+        if(user != null) {
+            return ResponseEntity.unprocessableEntity().body("User already exists!");
+        }
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
 
         User newUser = User.builder()
-                .username(data.userName())
+                .name(data.userName())
                 .password(encryptedPassword)
-                .userRoles(Set.of(data.role()))
+                .roles(Set.of(data.role()))
                 .build();
 
         userRepository.save(newUser);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Successfully registered user! ");
+    }
+
+    @GetMapping("/admin/users")
+    public List<User> listUsers() {
+        return userRepository.findAll();
+    }
+
+    @PutMapping("/admin/delete-user")
+    public ResponseEntity deleteUser(@RequestHeader String userName) {
+        // Todo: validar user antes de excluir
+        userRepository.deleteByUsername(userName);
+        return ResponseEntity.ok("User deleted with success!");
     }
 
     @GetMapping("/public")
@@ -63,12 +81,5 @@ public class TestController {
     @GetMapping("/private")
     public String privateRoute() {
         return "<h1>Private route</h1>";
-    }
-
-    @GetMapping("/jwt")
-    public String privateRouteJwt() {
-        return String.format("""
-                <h1>Private route JWT</h1>
-                """);
     }
 }
