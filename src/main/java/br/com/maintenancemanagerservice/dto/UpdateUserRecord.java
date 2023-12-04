@@ -1,11 +1,12 @@
 package br.com.maintenancemanagerservice.dto;
 
 import br.com.maintenancemanagerservice.model.enums.UserRole;
+import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 import java.util.Objects;
 
-public record UpdateUserRecord(String name, List<UserRole> roles) {
+public record UpdateUserRecord(@NotBlank String id, String name, List<UserRole> roles) {
     public UpdateUserRecord {
         if(Objects.isNull(name) && Objects.isNull(roles)) {
             throw new IllegalArgumentException("Invalid request");

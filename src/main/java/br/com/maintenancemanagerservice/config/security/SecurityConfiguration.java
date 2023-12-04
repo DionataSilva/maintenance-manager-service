@@ -1,7 +1,5 @@
 package br.com.maintenancemanagerservice.config.security;
 
-import br.com.maintenancemanagerservice.model.entity.User;
-import br.com.maintenancemanagerservice.model.enums.UserRole;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,15 +17,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.util.Set;
-
 @Configuration
 @EnableWebSecurity
 @AllArgsConstructor
 public class SecurityConfiguration {
-
-
-    private final SecurityUserDetailService userDetailService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityFilter securityFilter) throws Exception {
@@ -37,9 +30,8 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests( (authorize) -> authorize
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/public/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/auth/login").permitAll()
-                        .requestMatchers("/auth/admin/**").hasAnyAuthority("ROLE_ADMIN")
+                        .requestMatchers("/auth/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -62,20 +54,4 @@ public class SecurityConfiguration {
 
         return new ProviderManager(authenticationProvider);
     }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        // TODO: Bean temporário
-        var userDetails = User.builder()
-                .name("Admin")
-                .password(passwordEncoder().encode("root-admin-pass"))
-                .roles(Set.of(UserRole.ADMIN))
-                .build();
-
-        userDetailService.saveUserDetail(userDetails);
-
-        return userDetailService;
-    }
-
-
 }

@@ -26,15 +26,20 @@ public class User implements UserDetails {
     @Indexed(unique = true)
     private String name;
     private String password;
-    private Set<UserRole> roles;
+    @Builder.Default
+    private Set<UserRole> userRoles = Set.of(UserRole.USER);
+    @Builder.Default
     private boolean enabled = true;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
+        return userRoles.stream()
                 .flatMap(role -> {
                     if (UserRole.ADMIN.equals(role)) {
-                        return Stream.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+                        return Stream.of(
+                                new SimpleGrantedAuthority("ROLE_ADMIN"),
+                                new SimpleGrantedAuthority("ROLE_USER")
+                        );
                     } else {
                         return Stream.of(new SimpleGrantedAuthority("ROLE_USER"));
                     }
