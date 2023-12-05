@@ -5,7 +5,10 @@ import br.com.maintenancemanagerservice.exceptions.UserException;
 import br.com.maintenancemanagerservice.model.entity.User;
 import br.com.maintenancemanagerservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,7 +37,9 @@ public class UserService implements UserDetailsService {
     }
 
     public ResponseEntity<RegistrationResponseRecord> register(RegisterUserRecord userRecord) {
-        var encryptedPassword = new BCryptPasswordEncoder().encode(userRecord.password());
+        var password = userRecord.password();
+
+        var encryptedPassword = encryptPassword(Objects.nonNull(password)? password : "1234");
 
         var newUser = User.builder()
                 .name(userRecord.userName())
@@ -55,17 +60,61 @@ public class UserService implements UserDetailsService {
 
     }
 
-    private User update(UpdateUserRecord updateRecord) {
+    public ResponseEntity<String> update(UpdateUserRecord updateRecord) {
 
-        this.saveOrUpdate(null, false);
-        return null;
+        //TODO: Ajustar validação
+        var contextAuth = SecurityContextHolder.getContext().getAuthentication();
+        var isAbleToUpdateRoles = contextAuth.getAuthorities().contains("ROLE_ADMIN");
+
+        var userOptional = userRepository.findById(updateRecord.id());
+
+        if (userOptional.isEmpty()){
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        var user = userOptional.get();
+
+        if(Objects.nonNull(updateRecord.roles()) && isAbleToUpdateRoles) {
+            user.setUserRoles(updateRecord.roles());
+        }
+
+        if(Objects.nonNull(updateRecord.name())) {
+            user.setName(updateRecord.name());
+        }
+
+        this.saveOrUpdate(user, false);
+        return ResponseEntity.ok("User updated!");
     }
 
 
-    private User update(UpdatePasswordRecord passwordRecord) {
+    public ResponseEntity<String> update(String id,  String password) {
+        var userOptional = userRepository.findById(id);
 
-        this.saveOrUpdate(null, false);
-        return null;
+        if (userOptional.isEmpty()){
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        var user = userOptional.get();
+
+        user.setPassword(encryptPassword(password));
+
+        this.saveOrUpdate(user, false);
+        return ResponseEntity.ok("Password changed!");
+    }
+
+    public ResponseEntity<String> softDelete(String userId){
+        var userOptional = userRepository.findById(userId);
+
+        if(userOptional.isEmpty()){
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        var user = userOptional.get();
+        user.setEnabled(!user.isEnabled());
+
+        this.saveOrUpdate(user, false);
+
+        return ResponseEntity.ok(String.format("User %s %s", user.getName(), user.isEnabled() ? "is enabled." : "is disabled."));
     }
 
     @Transactional
@@ -73,7 +122,7 @@ public class UserService implements UserDetailsService {
         var registeredUser = userRepository.findByName(userName);
 
         if (Objects.isNull(registeredUser)) {
-            return ResponseEntity.notFound().build();
+            return  ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
         userRepository.deleteByName(userName);
 
@@ -105,5 +154,9 @@ public class UserService implements UserDetailsService {
 
 
         return userRepository.save(user);
+    }
+
+    private static String encryptPassword(String password) {
+        return new BCryptPasswordEncoder().encode(password);
     }
 }

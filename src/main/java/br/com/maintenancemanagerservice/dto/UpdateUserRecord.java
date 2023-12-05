@@ -5,8 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
-public record UpdateUserRecord(@NotBlank String id, String name, List<UserRole> roles) {
+public record UpdateUserRecord(@NotBlank String id, String name, Set<UserRole> roles) {
     public UpdateUserRecord {
         if(Objects.isNull(name) && Objects.isNull(roles)) {
             throw new IllegalArgumentException("Invalid request");

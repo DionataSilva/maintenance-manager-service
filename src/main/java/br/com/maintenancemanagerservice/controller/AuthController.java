@@ -39,13 +39,28 @@ public class AuthController {
         return userService.register(data);
     }
 
-    @GetMapping("/admin/list-users")
+    @GetMapping("/admin/user/list-all")
     public ResponseEntity<List<UserResponseRecord>> listUsers() {
         return userService.listAll();
     }
 
-    @PutMapping("/admin/delete-user")
+    @PutMapping("/admin/user/delete")
     public ResponseEntity<String> deleteUser(@RequestHeader String userName) {
         return userService.delete(userName);
+    }
+
+    @PutMapping("/admin/user/soft-delete")
+    public ResponseEntity<String> softDeleteUser(@RequestParam String userId) {
+        return userService.softDelete(userId);
+    }
+
+    @PutMapping("/user/update")
+    public ResponseEntity<String> updateUser(@RequestBody UpdateUserRecord userData) {
+        return userService.update(userData);
+    }
+
+    @PutMapping("/user/update-password")
+    public ResponseEntity<String> updatePassword(@RequestParam String id, @RequestParam String password) {
+        return userService.update(id, password);
     }
 }
