@@ -1,23 +1,28 @@
 services:
 
   mongodb:
+    networks:
+      - maintenance-network
     image: 'mongo:latest'
     environment:
-      - 'MONGO_INITDB_DATABASE=devDatabase'
-      - 'MONGO_INITDB_ROOT_PASSWORD=root'
-      - 'MONGO_INITDB_ROOT_USERNAME=root'
+      - MONGO_INITDB_DATABASE=devDatabase
+    secrets:
+      - maintenance_secrets
     ports:
       - '27017:27017'
 
   rabbitmq:
+    networks:
+      - maintenance-network
     image: 'rabbitmq:latest'
-    environment:
-      - 'RABBITMQ_DEFAULT_PASS=root'
-      - 'RABBITMQ_DEFAULT_USER=root'
+    secrets:
+      - maintenance_secrets
     ports:
       - '5672:5672'
 
   prometheus:
+    networks:
+      - maintenance-network
     image: prom/prometheus:v2.44.0
     container_name: prometheus
     command:
@@ -30,16 +35,34 @@ services:
       - prom_data:/prometheus
 
   grafana:
+    networks:
+      - maintenance-network
     image: grafana/grafana:9.5.2
     container_name: grafana
     ports:
       - "3000:3000"
     restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_USER=root
-      - GF_SECURITY_ADMIN_PASSWORD=root
+    secrets:
+      - maintenance_secrets
     volumes:
       - ./monitoring/provisioning/datasources:/etc/grafana/provisioning/datasources
 
+  maintenance-service:
+    networks:
+      - maintenance-network
+    image: maintenance-service
+    container_name: maintenance-service
+    ports:
+      - "8080:8080"
+    secrets:
+      - maintenance_secrets
+
 volumes:
   prom_data:
+
+networks:
+  maintenance-network:
+
+secrets:
+  maintenance_secrets:
+    file: ./dev_secrets.txt
