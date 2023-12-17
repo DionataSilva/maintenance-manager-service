@@ -30,3 +30,11 @@ api:
   security:
     token:
       secret: ${JWT_SECRET:dev-secret-key}
+
+springdoc:
+  api-docs:
+    path: /openapi/docs
+  swagger-ui:
+    enabled: true
+    path: /openapi/swagger-ui.html
+  show-actuator: false

@@ -30,6 +30,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests( (authorize) -> authorize
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/openapi/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/auth/login").permitAll()
                         .requestMatchers("/user/**").authenticated()
                         .requestMatchers("/auth/admin/**").hasRole("ADMIN")
